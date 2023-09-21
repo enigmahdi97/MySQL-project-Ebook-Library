@@ -1,0 +1,172 @@
+/* The CIS Department at Tiny College maintains the Free Access to Current Technology (FACT) library of e-books. FACT is a collection of current technology e-books for use by 
+faculty and students. Agreements with the publishers allow patrons to electronically check out a book, which gives them exclusive access to the book online through the FACT 
+website, but only one patron at a time can have access to a book. A book must have at least one author but can have many. An author must have written at least one book to be 
+included in the system but may have written many. A book may have never been checked out but can be checked out many times by the same patron or different patrons over time. 
+Because all faculty and staff in the department are given accounts at the online library, a patron may have never checked out a book or they may have checked out many books 
+over time. To simplify determining which patron currently has a given book checked out, a redundant relationship between BOOK and PATRON is maintained. */
+
+
+
+-- Understanding the dataset
+SELECT * FROM author LIMIT 10;
+SELECT * FROM book LIMIT 10;
+SELECT * FROM checkout LIMIT 10;
+SELECT * FROM patron LIMIT 10;
+SELECT * FROM writes LIMIT 10;
+
+-- Counting the rows
+SELECT COUNT(*) AS TotalAuthors
+	FROM author;
+SELECT COUNT(*) AS TotalBooks
+	FROM BOOK;
+SELECT COUNT(*) AS TotalCheckouts
+	FROM CHECKOUT;
+SELECT COUNT(*) AS TotalPatrons
+	FROM PATRON;
+SELECT COUNT(*) AS TotalWrites
+	FROM WRITES;
+
+-- Write a query that displays the first and last name of every patron, sorted by last name and then first name. Ensure the sort is case insensitive (50 rows)
+SELECT PAT_FNAME, PAT_LNAME
+	FROM PATRON
+		order by PAT_LNAME, PAT_FNAME;
+
+-- Write a query to display the book number, book title, and subject for every book sorted by book number (20 rows)
+SELECT BOOK_NUM, BOOK_TITLE, BOOK_SUBJECT
+	FROM BOOK
+		ORDER BY BOOK_NUM;
+
+-- Write a query to display the different subjects on which FACT has books. Include each subject only once and sort the results by subject 
+SELECT DISTINCT BOOK_SUBJECT
+	FROM BOOK
+		ORDER BY BOOK_SUBJECT;
+
+-- Write a query to display the checkout number, book number, patron ID, checkout date, and due date for every checkout that has ever occurred in the system. Sort the results by checkout date in descending order and then by checkout number in ascending order (68 rows)
+SELECT CHECK_NUM, BOOK_NUM, PAT_ID, CHECK_OUT_DATE, CHECK_DUE_DATE
+	FROM CHECKOUT
+		ORDER BY CHECK_OUT_DATE DESC, CHECK_NUM ASC;
+
+-- Write a query to display the book number, title, and cost for all books that cost $59.95 sorted by book number 
+SELECT BOOK_NUM, BOOK_TITLE, BOOK_COST
+	FROM BOOK
+		WHERE BOOK_COST=59.95
+			ORDER BY BOOK_NUM;
+
+-- Write a query to display the checkout number, book number, and checkout date of all books checked out before April 5, 2017 sorted by checkout number 
+SELECT CHECK_NUM, BOOK_NUM, CHECK_OUT_DATE
+	FROM CHECKOUT
+		WHERE CHECK_OUT_DATE<'2017-04-05'
+			ORDER BY CHECK_NUM;
+
+-- Write a query to display the book number, title, subject, and cost for all books that are on the subjects of "Middleware" or "Cloud," and that cost more than $70 sorted by book number 
+SELECT BOOK_NUM, BOOK_TITLE, BOOK_SUBJECT, BOOK_COST
+	FROM BOOK
+		WHERE BOOK_SUBJECT IN ('MIDDLEWARE','CLOUD') AND BOOK_COST>70
+			ORDER BY BOOK_NUM;
+
+-- Write a query to display the book number, title, and subject for all books that contain the word "Database" in the title, regardless of how it is capitalized. Sort the results by book number 
+SELECT BOOK_NUM, BOOK_TITLE, BOOK_SUBJECT
+	FROM BOOK
+		WHERE LOWER(BOOK_TITLE) LIKE '%database%'
+			ORDER BY BOOK_NUM;
+
+-- Write a query to display the patron ID, first and last name, and patron type for all patrons whose last name begins with the letter "C" sorted by patron ID 
+SELECT PAT_ID, PAT_FNAME, PAT_LNAME, PAT_TYPE
+	FROM PATRON
+		WHERE PAT_LNAME LIKE 'C%'
+			ORDER BY PAT_ID;
+
+-- Write a query to display the author ID, first and last name of all authors whose year of birth is known. Ensure the results are sorted by author ID 
+SELECT AU_ID, AU_FNAME, AU_LNAME
+	FROM AUTHOR
+		WHERE AU_BIRTHYEAR IS NOT NULL
+			ORDER BY AU_ID;
+
+
+-- INCLUDE AUTHOR NAME AND AUTHOR ID WITH THE BOOK TABLE
+SELECT BOOK.*, CONCAT(AU_FNAME, ' ', AU_LNAME) AS AUTHOR_NAME, AUTHOR.AU_ID
+	FROM BOOK
+     JOIN WRITES ON WRITES.BOOK_NUM=BOOK.BOOK_NUM
+     JOIN AUTHOR ON AUTHOR.AU_ID=WRITES.AU_ID;
+
+-- SAME AS PREVIOUS, EXCEPT AUTHOR ID AND AUTHOR NAME RIGHT NEXT TO BOOK TITLE
+SELECT
+    B.BOOK_NUM,
+    B.BOOK_TITLE,
+    CONCAT(A.AU_FNAME, ' ', A.AU_LNAME) AS author_name,
+    W.AU_ID AS author_id,
+    B.BOOK_YEAR,
+    B.BOOK_COST,
+    B.BOOK_SUBJECT,
+    B.PAT_ID
+FROM
+    BOOK AS B
+    JOIN WRITES AS W ON B.BOOK_NUM = W.BOOK_NUM
+    JOIN AUTHOR AS A ON W.AU_ID = A.AU_ID;
+
+-- CREATE A SEPARATE TABLE IN THE DATABASE WITH TOTAL OF BOOK TABLE AND AUTHOR NAME AND AUTHOR ID
+CREATE TABLE BOOK_DETAILS_WITH_AUTHOR_NAME
+SELECT
+    B.BOOK_NUM,
+    B.BOOK_TITLE,
+    CONCAT(A.AU_FNAME, ' ', A.AU_LNAME) AS author_name,
+    W.AU_ID AS author_id,
+    B.BOOK_YEAR,
+    B.BOOK_COST,
+    B.BOOK_SUBJECT,
+    B.PAT_ID
+FROM
+    BOOK AS B
+    JOIN WRITES AS W ON B.BOOK_NUM = W.BOOK_NUM
+    JOIN AUTHOR AS A ON W.AU_ID = A.AU_ID;
+
+-- Changing the name of the new table
+ALTER TABLE BOOK_DETAILS_WITH_AUTHOR_NAME
+	RENAME TO BookInfo_With_Auth_Info;
+
+
+
+-- Retrieving Patron Names from patron table to find out patrons for different book subjects in book table
+SELECT BOOK_SUBJECT, GROUP_CONCAT(PAT_FNAME, ' ', PAT_LNAME SEPARATOR ', ') AS PAT_NAME
+	FROM BOOK
+	JOIN PATRON ON PATRON.PAT_ID=BOOK.PAT_ID
+        GROUP BY BOOK_SUBJECT;
+
+-- Retrieving Patron Names from patron table to find out patrons for different books(titles) in book table
+SELECT BOOK_TITLE, CONCAT(PAT_FNAME, ' ', PAT_LNAME) AS PAT_NAME
+	FROM BOOK
+	JOIN PATRON ON PATRON.PAT_ID=BOOK.PAT_ID
+		ORDER BY PAT_NAME;
+-- A lot of null and missing value in pat_id in book table
+
+-- FIND THE RANGE OF DATES IN CHECKOUT TABLE
+	SELECT 'Checkout Date' AS Date_Type, MAX(Check_out_Date) AS Max_Date, MIN(Check_out_Date) AS Min_Date
+		FROM CHECKOUT
+UNION ALL
+	SELECT 'Due Date', MAX(CHECK_Due_Date), MIN(CHECK_Due_Date)
+		FROM CHECKOUT
+UNION ALL
+	SELECT 'Return Date', MAX(CHECK_IN_Date), MIN(CHECK_IN_Date)
+		FROM CHECKOUT;
+-- DATE RANGES FROM MARCH 31,2017 TO MAY 31,2017 IN CECKOUT TABLE
+
+-- BOOKS THAT WASN'T CHECKED OUT OUT BY ANYONE IN THESE TWO MONTHS
+SELECT BOOK.BOOK_NUM, BOOK_TITLE
+	FROM BOOK
+	LEFT JOIN CHECKOUT ON BOOK.BOOK_NUM = CHECKOUT.BOOK_NUM
+		WHERE CHECKOUT.BOOK_NUM IS NULL;
+-- THESE ARE THE BOOKS 5239, 5241, 5245, 5247, 5250, 5251, 5253 THAT WASN'T CHECKED OUT IN THESE TWO MONTHS
+
+-- NUMBER OF DISTINCT BOOKS THAT WERE CHECKED OUT
+SELECT COUNT(DISTINCT BOOK.BOOK_NUM) AS NUM_DSTNCT_BOOK_CHKOUTS
+	FROM BOOK
+	LEFT JOIN CHECKOUT ON BOOK.BOOK_NUM = CHECKOUT.BOOK_NUM
+		WHERE CHECKOUT.BOOK_NUM IS NOT NULL;
+
+
+-- In the book table there are a lot of missing data in PAT_ID column, attempt to fill-in the data best way possible.
+SELECT BOOK.BOOK_NUM, BOOK_TITLE, BOOK_YEAR, BOOK_COST, BOOK_SUBJECT, CHECKOUT.PAT_ID AS NEW_PAT_ID, CONCAT(PAT_FNAME, ' ', PAT_LNAME) AS PAT_NAME
+	FROM BOOK
+    LEFT JOIN CHECKOUT ON CHECKOUT.BOOK_NUM=BOOK.BOOK_NUM
+    LEFT JOIN PATRON ON PATRON.PAT_ID=CHECKOUT.PAT_ID;
+-- Now the only null values that exist in the new_pat_id and pat_name columns are with regards to the books that haven't been checcked out ever in those two months.
