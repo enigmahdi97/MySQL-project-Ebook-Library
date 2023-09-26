@@ -1,6 +1,6 @@
 # MySQL-project-Ebook-Library
 
-This is a Ebook Library database of two months in 2017, where we first create the database, in the SQL file run line 5 to line 238 first, to create the database. After that the rest of the segments are used to better
+This is work is based on a Ebook Library database of two months in 2017. Here we first create the database, in the SQL file run line 5 to line 238 first, to create the database. After that the rest of the segments are used to better
 understand, analyze & find insights from the database and the tables within. After creating the database, run these segments one by one. Read the comments in the sql file to understand what the code is doing.
 
 Context of the data set: The CIS Department at Tiny College maintains the Free Access to Current Technology (FACT) library of e-books. FACT is a collection of current technology e-books for use by 
